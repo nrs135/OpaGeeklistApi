@@ -123,16 +123,17 @@ module Geeklist(Geeklist.params params){
     (credentials.access_token != "" && credentials.access_secret != "")
   }
 
-  server function geek_avatar() {
+  server function geek_avatar(size) {
     (option(string)) match (List.assoc("avatar",get_geek())) {
       case {some:{Record:avatars}}:
-        match (List.assoc("small",avatars)) {
+        match (List.assoc(match (size) { case {small}: "small"; case {large}: "large"; },avatars)) {
           case {some:{String:small}}: {some:small};
           default: {none};
         };
       default: {none};
     };
   }
+
   server function geek_screen_name() {
     (option(string)) match (List.assoc("screen_name",get_geek())) {
       case {some:{String:screen_name}}: {some:screen_name};
@@ -264,7 +265,7 @@ module Geeklist(Geeklist.params params){
   }
 
   /**
-   * The low-level calls.  You can buikd any parameters with these.
+   * The low-level calls.  You can build any parameters with these.
    **/
   function get0(list(string) path, list(Geeklist.query_params) params, Geeklist.credentials credentials) {
     geek(OA, path, params, credentials)

@@ -110,7 +110,7 @@ server function page() {
       </div>
      </div>
       {geeklist_logo}
-      {get_avatar(GL.geek_avatar())}
+      {get_avatar(GL.geek_avatar({small}))}
       <div>
       <a onclick={GL.authenticate} class="btn">{authdrop}</a>
       </div>
