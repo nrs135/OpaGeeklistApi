@@ -209,11 +209,20 @@ module Geeklist(Geeklist.params params){
     UserContext.change_or_destroy(function (data) { {some:{data with ~credentials}}; },data);
   }
 
+  /**
+   * Predicate to ascertain whether authentication credentials are present or not.
+   **/
   server function valid_credentials() {
     credentials = get_credentials();
     (credentials.access_token != "" && credentials.access_secret != "")
   }
 
+  /**
+   * Return the address of the geeklist avatar from the stored user data.
+   * The set_geek() function must have been previously called.
+   *
+   * @param size Either {small} or {large}
+   **/
   server function geek_avatar(size) {
     (option(string)) match (List.assoc("avatar",get_geek())) {
       case {some:{Record:avatars}}:
@@ -225,6 +234,9 @@ module Geeklist(Geeklist.params params){
     };
   }
 
+  /**
+   * Return the geeklist screen_name value from previously stored geeklist user data.
+   **/
   server function geek_screen_name() {
     (option(string)) match (List.assoc("screen_name",get_geek())) {
       case {some:{String:screen_name}}: {some:screen_name};
@@ -295,6 +307,17 @@ module Geeklist(Geeklist.params params){
    * Trigger by a button or link or something.
    * Note that this is a toggle, if you are logged in it will log you out
    * and destroy the connection data.
+   *
+   * @param wtype Either {here} to use the main window for authentication interaction or
+   * {popup:{int width, int height}} to open a separate window.  Note that the behaviour of
+   * the callback handler will be different in each case.
+   *
+   * @param after The URI to handle the authentication callbacks.  This address will have the 
+   * path "/geeklist_callback" appended to it.
+   *
+   * @param err_id Should be the id of a Dom element in which to put an error message
+   * should the initial attempt at authentication fail, ie. before the callback is called.:w
+   *
    **/
   server function authenticate(wtype, after, err_id)(_) {
     if (valid_credentials()) {
@@ -338,6 +361,14 @@ module Geeklist(Geeklist.params params){
 
   /**
    * A parser which you can add to your server's input parser to handle the callbacks.
+   *
+   * @param on_success A function to call when authentication succeeds.
+   *
+   * @return result A pair consisting of the current authentication window type ({here} or {popup})
+   * plus a result code which is either {ok} or {error:(error_string, close_window_function)}.
+   * The idea is that you can compose an error page within a popup using the error string and provide
+   * a link or button to close the popup window.  Calling the close_window_function using the main window
+   * does nothing.
    **/
   server function geeklist_uris(on_success) {
     parser {
@@ -389,6 +420,17 @@ module Geeklist(Geeklist.params params){
     }
   }
 
+  /**
+   * The lowest-level call to the geeklist API.
+   *
+   * @param OA You need the OAuth object (either GET or POST)
+   *
+   * @param path The geeklist API path
+   *
+   * @param params List of Geeklist API parameters.
+   *
+   * @param credentials The credentials returned by the authentication process.
+   **/
   function geek(OA, list(string) path, list(Geeklist.query_params) params, Geeklist.credentials credentials) {
     params =
       List.map(function (qp) {
@@ -422,21 +464,30 @@ module Geeklist(Geeklist.params params){
   }
 
   /**
-   * The low-level calls.  You can build any parameters with these.
+   * Perform a GET call with the given credentials.
    **/
   function get0(list(string) path, list(Geeklist.query_params) params, Geeklist.credentials credentials) {
     geek(OA, path, params, credentials)
   }
 
+  /**
+   * Perform a GET call with the stored credentials.
+   **/
   function get(list(string) path, list(Geeklist.query_params) params) {
     credentials = get_credentials();
     get0(path, params, credentials)
   }
 
+  /**
+   * Perform a POST call with the given credentials.
+   **/
   function post0(list(string) path, list(Geeklist.query_params) params, Geeklist.credentials credentials) {
     geek(OA_POST, path, params, credentials)
   }
 
+  /**
+   * Perform a POST call with the stored credentials.
+   **/
   function post(list(string) path, list(Geeklist.query_params) params) {
     credentials = get_credentials();
     post0(path, params, credentials)
