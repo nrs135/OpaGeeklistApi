@@ -21,6 +21,7 @@ FLAG =
 
 all: $(PACKNAME)
 
+pack: $(PACKNAME)
 exe: geeklist_test.exe
 geeklist_test.exe: $(PACKNAME)
 	opa geeklist_test.opa --build-dir $(BUILDDIR) -I $(BUILDDIR) $(OPAOPT)
